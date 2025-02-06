@@ -45,6 +45,7 @@ esp-config = { version = "0.3.0", path = "../esp-config" }
 xtensa-lx-rt = { version = "0.18.0", path = "../xtensa-lx-rt", optional = true }
 serde = { version = "1.0.217", default-features = false, features = ["derive"], optional = true }
 
+
 [build-dependencies]
 esp-build    = { version = "0.2.0", path = "../esp-build" }
 esp-config   = { version = "0.3.0", path = "../esp-config", features = ["build"] }
@@ -132,6 +133,8 @@ smoltcp = ["dep:smoltcp"]
 ## Provide utilities for smoltcp initialization. Adds smoltcp dependency
 utils = ["smoltcp"]
 
+# Use external scheduler
+preempt-extern = []
 
 # Implement serde Serialize / Deserialize
 serde = ["dep:serde", "enumset?/serde", "heapless/serde"]
