@@ -121,22 +121,16 @@ use portable_atomic::Ordering;
 #[cfg(feature = "wifi")]
 use crate::wifi::WifiError;
 use crate::{
+    preempt::yield_task,
     tasks::init_tasks,
-    timer::{
-        disable_multitasking,
-        disable_timer,
-        setup_multitasking,
-        setup_radio_isr,
-        setup_timer,
-        shutdown_radio_isr,
-        yield_task,
-    },
+    timer::{setup_radio_isr, shutdown_radio_isr},
 };
 
 mod binary {
     pub use esp_wifi_sys::*;
 }
 mod compat;
+
 mod preempt;
 
 mod timer;
@@ -241,7 +235,7 @@ const _: () = {
     core::assert!(CONFIG.rx_ba_win < (CONFIG.static_rx_buf_num * 2), "WiFi configuration check: rx_ba_win should not be larger than double of the static_rx_buf_num!");
 };
 
-type TimeBase = PeriodicTimer<'static, Blocking>;
+pub(crate) type TimeBase = PeriodicTimer<'static, Blocking>;
 
 pub(crate) mod flags {
     use portable_atomic::{AtomicBool, AtomicUsize};
@@ -387,11 +381,13 @@ pub fn init<'d, T: EspWifiTimerSource>(
     info!("esp-wifi configuration {:?}", crate::CONFIG);
     crate::common_adapter::chip_specific::enable_wifi_power_domain();
     phy_mem_init();
-    init_tasks();
 
     setup_radio_isr();
-    setup_timer(unsafe { timer.clone_unchecked() }.timer());
-    setup_multitasking();
+
+    // This initializes the task switcher and timer tick interrupt.
+    preempt::setup(unsafe { timer.clone_unchecked() }.timer());
+
+    init_tasks();
     yield_task();
 
     wifi_set_log_verbose();
@@ -445,8 +441,9 @@ pub unsafe fn deinit_unchecked() -> Result<(), InitializationError> {
     }
 
     shutdown_radio_isr();
-    disable_timer();
-    disable_multitasking();
+
+    // This shuts down the task switcher and timer tick interrupt.
+    preempt::disable();
 
     crate::preempt::delete_all_tasks();
 

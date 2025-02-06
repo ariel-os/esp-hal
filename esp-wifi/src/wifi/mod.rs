@@ -1916,7 +1916,7 @@ mod sealed {
 
         fn tx_token(self) -> Option<WifiTxToken<Self>> {
             if !self.can_send() {
-                crate::timer::yield_task();
+                crate::preempt::yield_task();
             }
 
             if self.can_send() {
@@ -1929,7 +1929,7 @@ mod sealed {
         fn rx_token(self) -> Option<(WifiRxToken<Self>, WifiTxToken<Self>)> {
             let is_empty = self.data_queue_rx().with(|q| q.is_empty());
             if is_empty || !self.can_send() {
-                crate::timer::yield_task();
+                crate::preempt::yield_task();
             }
 
             let is_empty = is_empty && self.data_queue_rx().with(|q| q.is_empty());
