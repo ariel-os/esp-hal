@@ -122,8 +122,8 @@ use portable_atomic::Ordering;
 use crate::wifi::WifiError;
 use crate::{
     preempt::yield_task,
+    radio::{setup_radio_isr, shutdown_radio_isr},
     tasks::init_tasks,
-    timer::{setup_radio_isr, shutdown_radio_isr},
 };
 
 mod binary {
@@ -133,7 +133,8 @@ mod compat;
 
 mod preempt;
 
-mod timer;
+mod radio;
+mod time;
 
 #[cfg(feature = "wifi")]
 pub mod wifi;
@@ -447,7 +448,7 @@ pub unsafe fn deinit_unchecked() -> Result<(), InitializationError> {
 
     crate::preempt::delete_all_tasks();
 
-    crate::timer::TIMER.with(|timer| timer.take());
+    crate::preempt::timer::TIMER.with(|timer| timer.take());
 
     crate::flags::ESP_WIFI_INITIALIZED.store(false, Ordering::Release);
 

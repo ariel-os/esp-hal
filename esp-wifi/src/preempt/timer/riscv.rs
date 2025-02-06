@@ -92,15 +92,3 @@ pub(crate) fn yield_task() {
             .modify(|_, w| w.cpu_intr_from_cpu_3().set_bit());
     }
 }
-
-/// Current systimer count value
-/// A tick is 1 / 1_000_000 seconds
-pub(crate) fn systimer_count() -> u64 {
-    esp_hal::time::now().ticks()
-}
-
-// TODO: use an Instance type instead...
-pub(crate) fn time_diff(start: u64, end: u64) -> u64 {
-    // 52-bit wrapping sub
-    end.wrapping_sub(start) & 0x000f_ffff_ffff_ffff
-}
